@@ -60,6 +60,7 @@ GST_DEBUG_CATEGORY (GST_CAT_DEFAULT);
 struct _GstSRTClientSrcPrivate
 {
   SRTSOCKET sock;
+  GSocketAddress *sockaddr;
   gint poll_id;
   gint poll_timeout;
 
@@ -78,6 +79,7 @@ enum
   PROP_BIND_ADDRESS,
   PROP_BIND_PORT,
   PROP_RENDEZ_VOUS,
+  PROP_STATS,
 
   /*< private > */
   PROP_LAST
@@ -110,6 +112,10 @@ gst_srt_client_src_get_property (GObject * object,
       break;
     case PROP_RENDEZ_VOUS:
       g_value_set_boolean (value, priv->bind_port);
+      break;
+    case PROP_STATS:
+      g_value_take_boxed (value, gst_srt_base_src_get_stats (priv->sockaddr,
+              priv->sock));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -236,14 +242,12 @@ gst_srt_client_src_start (GstBaseSrc * src)
   GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
   GstUri *uri = gst_uri_ref (base->uri);
-  GSocketAddress *socket_address = NULL;
 
   priv->sock = gst_srt_client_connect_full (GST_ELEMENT (src), FALSE,
       gst_uri_get_host (uri), gst_uri_get_port (uri), priv->rendez_vous,
       priv->bind_address, priv->bind_port, base->latency,
-      &socket_address, &priv->poll_id, base->passphrase, base->key_length);
+      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length);
 
-  g_clear_object (&socket_address);
   g_clear_pointer (&uri, gst_uri_unref);
 
   return (priv->sock != SRT_INVALID_SOCK);
@@ -308,6 +312,10 @@ gst_srt_client_src_class_init (GstSRTClientSrcClass * klass)
       g_param_spec_boolean ("rendez-vous", "Rendez Vous",
       "Work in Rendez-Vous mode instead of client/caller mode", FALSE,
       G_PARAM_READWRITE | GST_PARAM_MUTABLE_READY | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_STATS] = g_param_spec_boxed ("stats", "Statistics",
+      "SRT Statistics", GST_TYPE_STRUCTURE,
+      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (gobject_class, PROP_LAST, properties);
 

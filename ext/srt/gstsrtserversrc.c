@@ -72,7 +72,7 @@ struct _GstSRTServerSrcPrivate
 enum
 {
   PROP_POLL_TIMEOUT = 1,
-
+  PROP_STATS = 2,
   /*< private > */
   PROP_LAST
 };
@@ -105,6 +105,10 @@ gst_srt_server_src_get_property (GObject * object,
   switch (prop_id) {
     case PROP_POLL_TIMEOUT:
       g_value_set_int (value, priv->poll_timeout);
+      break;
+    case PROP_STATS:
+      g_value_take_boxed (value, gst_srt_base_src_get_stats (priv->client_sockaddr,
+              priv->sock));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -450,6 +454,10 @@ gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
       g_param_spec_int ("poll-timeout", "Poll timeout",
       "Return poll wait after timeout miliseconds", 0, G_MAXINT32,
       SRT_DEFAULT_POLL_TIMEOUT, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
+
+  properties[PROP_STATS] = g_param_spec_boxed ("stats", "Statistics",
+      "SRT Statistics", GST_TYPE_STRUCTURE,
+      G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
   g_object_class_install_properties (gobject_class, PROP_LAST, properties);
 

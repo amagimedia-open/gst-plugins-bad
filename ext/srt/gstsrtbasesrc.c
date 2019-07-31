@@ -279,6 +279,63 @@ out:
   return ret;
 }
 
+GstStructure *
+gst_srt_base_src_get_stats (GSocketAddress * sockaddr, SRTSOCKET sock)
+{
+  SRT_TRACEBSTATS stats;
+  int ret;
+  GValue v = G_VALUE_INIT;
+  GstStructure *s;
+
+  if (sock == SRT_INVALID_SOCK || sockaddr == NULL)
+  {
+    return gst_structure_new_empty ("application/x-srt-statistics");
+  }
+
+  s = gst_structure_new ("application/x-srt-statistics",
+      "sockaddr", G_TYPE_SOCKET_ADDRESS, sockaddr, NULL);
+
+  ret = srt_bstats (sock, &stats, 0);
+  if (ret >= 0) {
+    gst_structure_set (s,
+        /* number of sent data packets, including retransmissions */
+        "packets-sent", G_TYPE_INT64, stats.pktSent,
+        /* number of lost packets (sender side) */
+        "packets-sent-lost", G_TYPE_INT, stats.pktSndLoss,
+        /* number of retransmitted packets */
+        "packets-retransmitted", G_TYPE_INT, stats.pktRetrans,
+        /* number of received ACK packets */
+        "packet-ack-received", G_TYPE_INT, stats.pktRecvACK,
+        /* number of received NAK packets */
+        "packet-nack-received", G_TYPE_INT, stats.pktRecvNAK,
+        /* time duration when UDT is sending data (idle time exclusive) */
+        "send-duration-us", G_TYPE_INT64, stats.usSndDuration,
+        /* number of sent data bytes, including retransmissions */
+        "bytes-sent", G_TYPE_UINT64, stats.byteSent,
+        /* number of retransmitted bytes */
+        "bytes-retransmitted", G_TYPE_UINT64, stats.byteRetrans,
+        /* number of too-late-to-send dropped bytes */
+        "bytes-sent-dropped", G_TYPE_UINT64, stats.byteSndDrop,
+        /* number of too-late-to-send dropped packets */
+        "packets-sent-dropped", G_TYPE_INT, stats.pktSndDrop,
+        /* sending rate in Mb/s */
+        "send-rate-mbps", G_TYPE_DOUBLE, stats.msRTT,
+        /* estimated bandwidth, in Mb/s */
+        "bandwidth-mbps", G_TYPE_DOUBLE, stats.mbpsBandwidth,
+        /* busy sending time (i.e., idle time exclusive) */
+        "send-duration-us", G_TYPE_UINT64, stats.usSndDuration,
+        "rtt-ms", G_TYPE_DOUBLE, stats.msRTT,
+        "negotiated-latency-ms", G_TYPE_INT, stats.msSndTsbPdDelay, NULL);
+  }
+
+  g_value_init (&v, G_TYPE_STRING);
+  g_value_take_string (&v,
+      g_socket_connectable_to_string (G_SOCKET_CONNECTABLE (sockaddr)));
+  gst_structure_take_value (s, "sockaddr-str", &v);
+
+  return s;
+}
+
 static void
 gst_srt_base_src_uri_handler_init (gpointer g_iface, gpointer iface_data)
 {
