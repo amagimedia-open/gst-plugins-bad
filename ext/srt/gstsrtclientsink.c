@@ -49,6 +49,7 @@
 #include <gio/gio.h>
 
 #define SRT_DEFAULT_POLL_TIMEOUT -1
+#define GST_SRT_DEFAULT_RECV_BUF_SIZE (8192 * 8192)
 
 static GstStaticPadTemplate sink_template = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
@@ -162,7 +163,8 @@ gst_srt_client_sink_start (GstBaseSink * sink)
   priv->sock = gst_srt_client_connect_full (GST_ELEMENT (sink), FALSE,
       gst_uri_get_host (uri), gst_uri_get_port (uri), priv->rendez_vous,
       priv->bind_address, priv->bind_port, base->latency,
-      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length);
+      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length,
+      GST_SRT_DEFAULT_RECV_BUF_SIZE);
 
   g_clear_pointer (&uri, gst_uri_unref);
 

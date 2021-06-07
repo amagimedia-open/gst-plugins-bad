@@ -67,12 +67,15 @@ struct _GstSRTClientSrcPrivate
   gboolean rendez_vous;
   gchar *bind_address;
   guint16 bind_port;
+  guint32 recv_buf_size;
 };
 
 #define GST_SRT_CLIENT_SRC_GET_PRIVATE(obj)  \
        (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_SRT_CLIENT_SRC, GstSRTClientSrcPrivate))
 
 #define SRT_DEFAULT_POLL_TIMEOUT -1
+//#define GST_SRT_DEFAULT_RECV_BUF_SIZE (8192 * (1500-28))
+#define GST_SRT_DEFAULT_RECV_BUF_SIZE (8192 * 8192)
 enum
 {
   PROP_POLL_TIMEOUT = 1,
@@ -80,7 +83,7 @@ enum
   PROP_BIND_PORT,
   PROP_RENDEZ_VOUS,
   PROP_STATS,
-
+  PROP_RECV_BUF_SIZE,
   /*< private > */
   PROP_LAST
 };
@@ -117,6 +120,9 @@ gst_srt_client_src_get_property (GObject * object,
       g_value_take_boxed (value, gst_srt_base_src_get_stats (priv->sockaddr,
               priv->sock));
       break;
+    case PROP_RECV_BUF_SIZE:
+      g_value_set_uint (value, priv->recv_buf_size);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -143,6 +149,9 @@ gst_srt_client_src_set_property (GObject * object,
       break;
     case PROP_RENDEZ_VOUS:
       priv->rendez_vous = g_value_get_boolean (value);
+      break;
+    case PROP_RECV_BUF_SIZE:
+      priv->recv_buf_size = g_value_get_uint (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -246,7 +255,8 @@ gst_srt_client_src_start (GstBaseSrc * src)
   priv->sock = gst_srt_client_connect_full (GST_ELEMENT (src), FALSE,
       gst_uri_get_host (uri), gst_uri_get_port (uri), priv->rendez_vous,
       priv->bind_address, priv->bind_port, base->latency,
-      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length);
+      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length,
+      priv->recv_buf_size);
 
   g_clear_pointer (&uri, gst_uri_unref);
 
@@ -317,6 +327,13 @@ gst_srt_client_src_class_init (GstSRTClientSrcClass * klass)
       "SRT Statistics", GST_TYPE_STRUCTURE,
       G_PARAM_READABLE | G_PARAM_STATIC_STRINGS);
 
+  properties[PROP_RECV_BUF_SIZE] =
+      g_param_spec_uint ("recv-buf-size", "Recv. Buffer Size",
+      "The number of recv. buffer bytes", 0,
+      G_MAXUINT32, GST_SRT_DEFAULT_RECV_BUF_SIZE,
+      G_PARAM_READWRITE | GST_PARAM_MUTABLE_READY | G_PARAM_STATIC_STRINGS);
+
+
   g_object_class_install_properties (gobject_class, PROP_LAST, properties);
 
   gst_element_class_add_static_pad_template (gstelement_class, &src_template);
@@ -342,4 +359,5 @@ gst_srt_client_src_init (GstSRTClientSrc * self)
   priv->rendez_vous = FALSE;
   priv->bind_address = NULL;
   priv->bind_port = 0;
+  priv->recv_buf_size = GST_SRT_DEFAULT_RECV_BUF_SIZE;
 }
