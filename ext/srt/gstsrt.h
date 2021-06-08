@@ -40,14 +40,14 @@ SRTSOCKET
 gst_srt_client_connect (GstElement * elem, int sender,
     const gchar * host, guint16 port, int rendez_vous,
     const gchar * bind_address, guint16 bind_port, int latency,
-    GSocketAddress ** socket_address, gint * poll_id);
+    GSocketAddress ** socket_address, gint * poll_id, guint32 recv_buf_size);
 
 SRTSOCKET
 gst_srt_client_connect_full (GstElement * elem, int sender,
     const gchar * host, guint16 port, int rendez_vous,
     const gchar * bind_address, guint16 bind_port, int latency,
     GSocketAddress ** socket_address, gint * poll_id,
-    gchar * passphrase, int key_length);
+    gchar * passphrase, int key_length, guint32 recv_buf_size);
 
 G_END_DECLS
 
