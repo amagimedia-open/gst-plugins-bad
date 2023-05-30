@@ -186,44 +186,84 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
   GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
   GstFlowReturn ret = GST_FLOW_OK;
+  GstSRTConnectionMode connection_mode = GST_SRT_CONNECTION_MODE_NONE;
   GstMapInfo info;
+  GError *err = NULL;
   SRTSOCKET ready[2];
   gint recv_len;
 
-  if (srt_epoll_wait (priv->poll_id, 0, 0, ready, &(int) {
-          2}, priv->poll_timeout, 0, 0, 0, 0) == -1) {
+  while(true){
 
-    /* Assuming that timeout error is normal */
-    if (srt_getlasterror (NULL) != SRT_ETIMEOUT) {
-      GST_ELEMENT_ERROR (src, RESOURCE, READ,
-          (NULL), ("srt_epoll_wait error: %s", srt_getlasterror_str ()));
-      ret = GST_FLOW_ERROR;
+    SRTSOCKET rsock;
+    gint rsocklen = 1;
+    SRTSOCKET wsock;
+    gint wsocklen = 1;
+
+    if (srt_epoll_wait (priv->poll_id, &rsock, &rsocklen, &wsock, &wsocklen,
+            priv->poll_timeout, NULL, 0, NULL, 0) < 0) {
+      gint srt_errno = srt_getlasterror (NULL);
+
+      if (srt_errno != SRT_ETIMEOUT) {
+
+        ret = GST_FLOW_EOS;
+        goto out;
+      }
+      GST_WARNING_OBJECT (self,
+          "EPOLL wait hit timeout, retrying... (reason: %s)",
+          srt_getlasterror_str ());
+      srt_clearlasterror ();
+      continue;
     }
-    srt_clearlasterror ();
-    goto out;
-  }
 
-  if (!gst_buffer_map (outbuf, &info, GST_MAP_WRITE)) {
-    GST_ELEMENT_ERROR (src, RESOURCE, READ,
-        ("Could not map the buffer for writing "), (NULL));
-    ret = GST_FLOW_ERROR;
-    goto out;
-  }
+    if (wsocklen == 1 && rsocklen == 1) {
+      /* Socket reported in wsock AND rsock signifies an error. */
+      gint reason = srt_getrejectreason (wsock);
+      gboolean is_auth_error = (reason == SRT_REJ_BADSECRET
+          || reason == SRT_REJ_UNSECURE);
 
-  recv_len = srt_recvmsg (priv->sock, (char *) info.data,
+      if (is_auth_error) {
+        ELEMENT_WARNING_SRTSOCK_ERROR (NOT_AUTHORIZED, reason);
+      }
+
+      GstBaseSrc* baseSrc = GST_BASE_SRC(src);
+      gst_srt_client_src_stop (baseSrc);
+      if (!gst_srt_cleint_src_start (baseSrc)) {
+          GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
+          ret = GST_FLOW_ERROR;
+          g_clear_error (&err);
+          goto out;
+      }
+      GST_WARNING_OBJECT (self,
+          "Socket reported in wsock AND rsock signifies an error. (reason: %s)",
+          srt_getlasterror_str ());
+      srt_clearlasterror ();
+      continue;
+    }
+
+    recv_len = srt_recvmsg (priv->sock, (char *) info.data,
       gst_buffer_get_size (outbuf));
 
-  gst_buffer_unmap (outbuf, &info);
-
-  if (recv_len == SRT_ERROR) {
-    GST_ELEMENT_ERROR (src, RESOURCE, READ,
-        (NULL), ("srt_recvmsg error: %s", srt_getlasterror_str ()));
-    ret = GST_FLOW_ERROR;
-    goto out;
-  } else if (recv_len == 0) {
-    ret = GST_FLOW_EOS;
-    goto out;
+    if (recv_len == SRT_ERROR) {
+      gint srt_errno = srt_getlasterror (NULL);
+        if (srt_errno == SRT_EASYNCRCV) {
+          GST_WARNING_OBJECT (self,
+          "srt_errno is SRT_EASYNRCV, (reason: %s)",
+          srt_getlasterror_str ());
+          srt_clearlasterror ();
+          continue;
+        } else {
+          g_set_error (err, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ,
+              "Failed to receive from SRT socket: %s", srt_getlasterror_str ());
+          GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
+          ret = GST_FLOW_ERROR;
+          g_clear_error (&err);
+          goto out;
+        }
+    }
+  break;
   }
+
+  gst_buffer_unmap (outbuf, &info);
 
   GST_BUFFER_PTS (outbuf) =
       gst_clock_get_time (GST_ELEMENT_CLOCK (src)) -
