@@ -190,7 +190,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   GstMapInfo info;
   GError *err = NULL;
   SRTSOCKET ready[2];
-  gint recv_len;
+  gin recv_len;
 
   while(true){
 
