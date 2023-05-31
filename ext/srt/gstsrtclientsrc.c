@@ -186,7 +186,6 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
   GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
   GstFlowReturn ret = GST_FLOW_OK;
-  GstSRTConnectionMode connection_mode = GST_SRT_CONNECTION_MODE_NONE;
   GstMapInfo info;
   GError *err = NULL;
   SRTSOCKET ready[2];
