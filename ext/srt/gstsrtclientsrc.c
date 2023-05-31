@@ -221,7 +221,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           || reason == SRT_REJ_UNSECURE);
 
       if (is_auth_error) {
-        ELEMENT_WARNING_SRTSOCK_ERROR (NOT_FOUND, reason);
+        ELEMENT_WARNING_SRTSOCK_ERROR (FAILED, reason);
       }
 
       GstBaseSrc* baseSrc = GST_BASE_SRC(src);
