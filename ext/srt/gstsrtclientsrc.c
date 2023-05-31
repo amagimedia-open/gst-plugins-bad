@@ -191,7 +191,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   SRTSOCKET ready[2];
   gint recv_len;
 
-  while(true){
+  while(1){
 
     SRTSOCKET rsock;
     gint rsocklen = 1;
@@ -221,7 +221,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           || reason == SRT_REJ_UNSECURE);
 
       if (is_auth_error) {
-        ELEMENT_WARNING_SRTSOCK_ERROR (NOT_AUTHORIZED, reason);
+        ELEMENT_WARNING_SRTSOCK_ERROR (NOT_FOUND, reason);
       }
 
       GstBaseSrc* baseSrc = GST_BASE_SRC(src);
