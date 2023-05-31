@@ -180,6 +180,46 @@ gst_srt_client_src_finalize (GObject * object)
   G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
+static gboolean
+gst_srt_client_src_start (GstBaseSrc * src)
+{
+  GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
+  GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
+  GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
+  GstUri *uri = gst_uri_ref (base->uri);
+
+  priv->sock = gst_srt_client_connect_full (GST_ELEMENT (src), FALSE,
+      gst_uri_get_host (uri), gst_uri_get_port (uri), priv->rendez_vous,
+      priv->bind_address, priv->bind_port, base->latency,
+      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length,
+      priv->recv_buf_size);
+
+  g_clear_pointer (&uri, gst_uri_unref);
+
+  return (priv->sock != SRT_INVALID_SOCK);
+}
+
+static gboolean
+gst_srt_client_src_stop (GstBaseSrc * src)
+{
+  GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
+  GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
+
+  if (priv->poll_id != SRT_ERROR) {
+    if (priv->sock != SRT_INVALID_SOCK)
+      srt_epoll_remove_usock (priv->poll_id, priv->sock);
+    srt_epoll_release (priv->poll_id);
+  }
+  priv->poll_id = SRT_ERROR;
+
+  GST_DEBUG_OBJECT (self, "closing SRT connection");
+  if (priv->sock != SRT_INVALID_SOCK)
+    srt_close (priv->sock);
+  priv->sock = SRT_INVALID_SOCK;
+
+  return TRUE;
+}
+
 static GstFlowReturn
 gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 {
@@ -281,46 +321,6 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 
 out:
   return ret;
-}
-
-static gboolean
-gst_srt_client_src_start (GstBaseSrc * src)
-{
-  GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
-  GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
-  GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
-  GstUri *uri = gst_uri_ref (base->uri);
-
-  priv->sock = gst_srt_client_connect_full (GST_ELEMENT (src), FALSE,
-      gst_uri_get_host (uri), gst_uri_get_port (uri), priv->rendez_vous,
-      priv->bind_address, priv->bind_port, base->latency,
-      &priv->sockaddr, &priv->poll_id, base->passphrase, base->key_length,
-      priv->recv_buf_size);
-
-  g_clear_pointer (&uri, gst_uri_unref);
-
-  return (priv->sock != SRT_INVALID_SOCK);
-}
-
-static gboolean
-gst_srt_client_src_stop (GstBaseSrc * src)
-{
-  GstSRTClientSrc *self = GST_SRT_CLIENT_SRC (src);
-  GstSRTClientSrcPrivate *priv = GST_SRT_CLIENT_SRC_GET_PRIVATE (self);
-
-  if (priv->poll_id != SRT_ERROR) {
-    if (priv->sock != SRT_INVALID_SOCK)
-      srt_epoll_remove_usock (priv->poll_id, priv->sock);
-    srt_epoll_release (priv->poll_id);
-  }
-  priv->poll_id = SRT_ERROR;
-
-  GST_DEBUG_OBJECT (self, "closing SRT connection");
-  if (priv->sock != SRT_INVALID_SOCK)
-    srt_close (priv->sock);
-  priv->sock = SRT_INVALID_SOCK;
-
-  return TRUE;
 }
 
 static void
