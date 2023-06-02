@@ -231,7 +231,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   SRTSOCKET ready[2];
   gint recv_len;
 
-  int count = 1;
+  int count = 100;
 
   for(int cnt = 1; cnt <= count; cnt++){
 
