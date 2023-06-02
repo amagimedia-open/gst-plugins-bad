@@ -261,8 +261,10 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           || reason == SRT_REJ_UNSECURE);
 
       if (is_auth_error) {
-        GST_ELEMENT_WARNING (priv->element, RESOURCE, NOT_AUTHORIZED, \
-        ("Error on SRT socket. Trying to reconnect."), SRTSOCK_ERROR_DEBUG)
+        GST_WARNING_OBJECT (self,
+          "Auth Error in srtclientsrc!. (reason: %s)",
+          srt_getlasterror_str ());
+        srt_clearlasterror ();
       }
 
       GstBaseSrc* baseSrc = GST_BASE_SRC(src);
