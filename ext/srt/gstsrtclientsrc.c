@@ -266,7 +266,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 
       GstBaseSrc* baseSrc = GST_BASE_SRC(src);
       gst_srt_client_src_stop (baseSrc);
-      if (!gst_srt_cleint_src_start (baseSrc)) {
+      if (!gst_srt_client_src_start (baseSrc)) {
           GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
           ret = GST_FLOW_ERROR;
           g_clear_error (&err);
