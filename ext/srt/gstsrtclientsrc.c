@@ -231,7 +231,9 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   SRTSOCKET ready[2];
   gint recv_len;
 
-  while(1){
+  int count = 1;
+
+  for(int cnt = 1; cnt <= count; cnt++){
 
     SRTSOCKET rsock;
     gint rsocklen = 1;
@@ -282,8 +284,17 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       continue;
     }
 
+    if (!gst_buffer_map (outbuf, &info, GST_MAP_WRITE)) {
+      GST_ELEMENT_ERROR (src, RESOURCE, READ,
+          ("Could not map the buffer for writing "), (NULL));
+      ret = GST_FLOW_ERROR;
+      goto out;
+    }
+
     recv_len = srt_recvmsg (priv->sock, (char *) info.data,
       gst_buffer_get_size (outbuf));
+
+    gst_buffer_unmap (outbuf, &info);
 
     if (recv_len == SRT_ERROR) {
       gint srt_errno = srt_getlasterror (NULL);
@@ -294,18 +305,16 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           srt_clearlasterror ();
           continue;
         } else {
-          // g_set_error (err, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ,
-          //     "Failed to receive from SRT socket: %s", srt_getlasterror_str ());
-          // GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
+          g_set_error (err, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ,
+              "Failed to receive from SRT socket: %s", srt_getlasterror_str ());
+          GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
           ret = GST_FLOW_ERROR;
           g_clear_error (&err);
           goto out;
         }
     }
-  break;
+    break;
   }
-
-  gst_buffer_unmap (outbuf, &info);
 
   GST_BUFFER_PTS (outbuf) =
       gst_clock_get_time (GST_ELEMENT_CLOCK (src)) -
