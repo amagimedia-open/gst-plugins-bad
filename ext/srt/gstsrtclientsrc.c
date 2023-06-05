@@ -279,6 +279,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           g_clear_error (&err);
           goto out;
       }
+      printf("Entered error handling condition 54321");
       GST_WARNING_OBJECT (self,
           "Socket reported in wsock AND rsock signifies an error. (reason: %s)",
           srt_getlasterror_str ());
