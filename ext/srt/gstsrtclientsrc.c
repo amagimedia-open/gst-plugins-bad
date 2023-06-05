@@ -234,6 +234,8 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   gint recv_len;
   int count = 100;
 
+  printf("Entered fill function 54321\n");
+
   for(int cnt = 0; cnt<=count; cnt++){
 
     SRTSOCKET rsock;
@@ -279,7 +281,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           g_clear_error (&err);
           goto out;
       }
-      printf("Entered error handling condition 54321");
+      printf("Entered error handling condition 54321\n");
       GST_WARNING_OBJECT (self,
           "Socket reported in wsock AND rsock signifies an error. (reason: %s)",
           srt_getlasterror_str ());
