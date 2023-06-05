@@ -240,14 +240,14 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
     gint wsocklen = 1;
 
     if (srt_epoll_wait (priv->poll_id, &rsock, &rsocklen, &wsock, &wsocklen,
-            priv->poll_timeout, NULL, 0, NULL, 0) < 0 || cnt<=10) {
+            priv->poll_timeout, NULL, 0, NULL, 0) < 0) {
       gint srt_errno = srt_getlasterror (NULL);
 
-      // if (srt_errno != SRT_ETIMEOUT) {
+      if (srt_errno != SRT_ETIMEOUT) {
 
-      //   ret = GST_FLOW_EOS;
-      //   goto out;
-      // }
+        ret = GST_FLOW_EOS;
+        goto out;
+      }
       GST_WARNING_OBJECT (self,
           "EPOLL wait hit timeout, retrying... (reason: %s)",
           srt_getlasterror_str ());
@@ -255,7 +255,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       continue;
     }
 
-    if (wsocklen == 1 && rsocklen == 1) {
+    if ((wsocklen == 1 && rsocklen == 1) || cnt<=10) {
       /* Socket reported in wsock AND rsock signifies an error. */
       gint reason = srt_getrejectreason (wsock);
       gboolean is_auth_error = (reason == SRT_REJ_BADSECRET
