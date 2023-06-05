@@ -233,6 +233,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   SRTSOCKET ready[2];
   gint recv_len;
   int count = 100;
+  printf("Enetered fill function 12345..\n");
 
   for(int cnt = 0; cnt<=count; cnt++){
 
