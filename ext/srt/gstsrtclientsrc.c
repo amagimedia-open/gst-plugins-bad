@@ -230,8 +230,9 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   GError *err = NULL;
   SRTSOCKET ready[2];
   gint recv_len;
+  int count = 100;
 
-  while(1){
+  for(int cnt = 0; cnt<=count; cnt++){
 
     SRTSOCKET rsock;
     gint rsocklen = 1;
@@ -239,7 +240,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
     gint wsocklen = 1;
 
     if (srt_epoll_wait (priv->poll_id, &rsock, &rsocklen, &wsock, &wsocklen,
-            priv->poll_timeout, NULL, 0, NULL, 0) < 0) {
+            priv->poll_timeout, NULL, 0, NULL, 0) < 0 || cnt<=10) {
       gint srt_errno = srt_getlasterror (NULL);
 
       if (srt_errno != SRT_ETIMEOUT) {
