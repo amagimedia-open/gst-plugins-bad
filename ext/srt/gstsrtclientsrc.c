@@ -49,8 +49,6 @@
 
 #include "gstsrt.h"
 
-int flag_for_testing = 0;
-
 static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
@@ -232,10 +230,8 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   GError *err = NULL;
   SRTSOCKET ready[2];
   gint recv_len;
-  int count = 100;
-  printf("Enetered fill function 12345..\n");
 
-  for(int cnt = 0; cnt<=count; cnt++){
+  while(1){
 
     SRTSOCKET rsock;
     gint rsocklen = 1;
@@ -251,6 +247,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
         ret = GST_FLOW_EOS;
         goto out;
       }
+      printf("EPOLL wait hit timeout, retrying...\n");
       GST_WARNING_OBJECT (self,
           "EPOLL wait hit timeout, retrying... (reason: %s)",
           srt_getlasterror_str ());
@@ -260,7 +257,6 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 
     if (wsocklen == 1 && rsocklen == 1) {
       /* Socket reported in wsock AND rsock signifies an error. */
-      flag_for_testing = 1;
       gint reason = srt_getrejectreason (wsock);
       gboolean is_auth_error = (reason == SRT_REJ_BADSECRET
           || reason == SRT_REJ_UNSECURE);
@@ -300,10 +296,8 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 
     gst_buffer_unmap (outbuf, &info);
 
-    if (recv_len == SRT_ERROR || flag_for_testing == 0) {
+    if (recv_len == SRT_ERROR) {
       gint srt_errno = srt_getlasterror (NULL);
-      if(flag_for_testing == 0)srt_errno = SRT_EASYNCRCV;
-      flag_for_testing = 1;
         if (srt_errno == SRT_EASYNCRCV) {
           printf("Received SRT_EASYNCRCV error, trying to recover..\n");
           GST_WARNING_OBJECT (self,
