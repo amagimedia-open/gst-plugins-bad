@@ -49,6 +49,8 @@
 
 #include "gstsrt.h"
 
+int flag_for_testing = 0;
+
 static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
@@ -255,8 +257,9 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       continue;
     }
 
-    if ((wsocklen == 1 && rsocklen == 1) || cnt<=10) {
+    if ((wsocklen == 1 && rsocklen == 1) || flag_for_testing == 0) {
       /* Socket reported in wsock AND rsock signifies an error. */
+      flag_for_testing = 1;
       gint reason = srt_getrejectreason (wsock);
       gboolean is_auth_error = (reason == SRT_REJ_BADSECRET
           || reason == SRT_REJ_UNSECURE);
