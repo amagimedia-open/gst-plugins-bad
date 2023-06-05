@@ -304,6 +304,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       if(flag_for_testing == 0)srt_errno = SRT_EASYNCRCV;
       flag_for_testing = 1;
         if (srt_errno == SRT_EASYNCRCV) {
+          printf("Received SRT_EASYNCRCV error, trying to recover..\n");
           GST_WARNING_OBJECT (self,
           "srt_errno is SRT_EASYNRCV, (reason: %s)",
           srt_getlasterror_str ());
