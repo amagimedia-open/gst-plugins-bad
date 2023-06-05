@@ -234,8 +234,6 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
   gint recv_len;
   int count = 100;
 
-  printf("Entered fill function 54321\n");
-
   for(int cnt = 0; cnt<=count; cnt++){
 
     SRTSOCKET rsock;
@@ -259,7 +257,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       continue;
     }
 
-    if ((wsocklen == 1 && rsocklen == 1) || flag_for_testing == 0) {
+    if (wsocklen == 1 && rsocklen == 1) {
       /* Socket reported in wsock AND rsock signifies an error. */
       flag_for_testing = 1;
       gint reason = srt_getrejectreason (wsock);
@@ -281,7 +279,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           g_clear_error (&err);
           goto out;
       }
-      printf("Entered error handling condition 54321\n");
+      printf("Socket reported in wsock AND rsock signifies an error\n");
       GST_WARNING_OBJECT (self,
           "Socket reported in wsock AND rsock signifies an error. (reason: %s)",
           srt_getlasterror_str ());
@@ -301,8 +299,10 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 
     gst_buffer_unmap (outbuf, &info);
 
-    if (recv_len == SRT_ERROR) {
+    if (recv_len == SRT_ERROR || flag_for_testing == 0) {
       gint srt_errno = srt_getlasterror (NULL);
+      if(flag_for_testing == 0)srt_errno = SRT_EASYNCRCV;
+      flag_for_testing = 1;
         if (srt_errno == SRT_EASYNCRCV) {
           GST_WARNING_OBJECT (self,
           "srt_errno is SRT_EASYNRCV, (reason: %s)",
