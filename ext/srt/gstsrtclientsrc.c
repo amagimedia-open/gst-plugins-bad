@@ -243,11 +243,11 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
             priv->poll_timeout, NULL, 0, NULL, 0) < 0 || cnt<=10) {
       gint srt_errno = srt_getlasterror (NULL);
 
-      if (srt_errno != SRT_ETIMEOUT) {
+      // if (srt_errno != SRT_ETIMEOUT) {
 
-        ret = GST_FLOW_EOS;
-        goto out;
-      }
+      //   ret = GST_FLOW_EOS;
+      //   goto out;
+      // }
       GST_WARNING_OBJECT (self,
           "EPOLL wait hit timeout, retrying... (reason: %s)",
           srt_getlasterror_str ());
