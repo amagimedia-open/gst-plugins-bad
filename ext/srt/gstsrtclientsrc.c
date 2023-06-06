@@ -247,7 +247,8 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
         ret = GST_FLOW_EOS;
         goto out;
       }
-      printf("EPOLL wait hit timeout, retrying...\n");
+      printf("EPOLL wait hit timeout, retrying... (reason: %s)\n", 
+          srt_getlasterror_str());
       GST_WARNING_OBJECT (self,
           "EPOLL wait hit timeout, retrying... (reason: %s)",
           srt_getlasterror_str ());
@@ -276,7 +277,8 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           g_clear_error (&err);
           goto out;
       }
-      printf("Socket reported in wsock AND rsock signifies an error\n");
+      printf("Socket reported in wsock AND rsock signifies an error, (reason: %s)\n",
+          srt_getlasterror_str());
       GST_WARNING_OBJECT (self,
           "Socket reported in wsock AND rsock signifies an error. (reason: %s)",
           srt_getlasterror_str ());
@@ -299,10 +301,11 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
     if (recv_len == SRT_ERROR) {
       gint srt_errno = srt_getlasterror (NULL);
         if (srt_errno == SRT_EASYNCRCV) {
-          printf("Received SRT_EASYNCRCV error, trying to recover..\n");
+          printf("Received SRT_EASYNCRCV error, trying to recover.. (reason : %s)\n",
+              srt_getlasterror());
           GST_WARNING_OBJECT (self,
-          "srt_errno is SRT_EASYNRCV, (reason: %s)",
-          srt_getlasterror_str ());
+              "srt_errno is SRT_EASYNRCV, (reason: %s)",
+              srt_getlasterror_str ());
           srt_clearlasterror ();
           continue;
         } else {
