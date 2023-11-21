@@ -272,9 +272,9 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
       GstBaseSrc* baseSrc = GST_BASE_SRC(src);
       gst_srt_client_src_stop (baseSrc);
       if (!gst_srt_client_src_start (baseSrc)) {
-          GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
+          GST_ELEMENT_ERROR (src, RESOURCE, READ,
+          ("Failed to start SRT Client src.."), (NULL));
           ret = GST_FLOW_ERROR;
-          g_clear_error (&err);
           goto out;
       }
       printf("Socket reported in wsock AND rsock signifies an error, (reason: %s)\n",
@@ -309,7 +309,7 @@ gst_srt_client_src_fill (GstPushSrc * src, GstBuffer * outbuf)
           srt_clearlasterror ();
           continue;
         } else {
-          g_set_error (err, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ,
+          g_set_error (&err, GST_RESOURCE_ERROR, GST_RESOURCE_ERROR_READ,
               "Failed to receive from SRT socket: %s", srt_getlasterror_str ());
           GST_ELEMENT_ERROR (src, RESOURCE, READ, (NULL), ("%s", err->message));
           ret = GST_FLOW_ERROR;
