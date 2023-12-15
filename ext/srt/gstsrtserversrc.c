@@ -584,7 +584,7 @@ gst_srt_server_src_init (GstSRTServerSrc * self)
   priv->main_loop = g_main_loop_new(NULL, FALSE);
 
   // Create a new thread for logging
-  priv->logging_thread = g_thread_new("LoggingThread", logging_thread_func, src);
+  priv->logging_thread = g_thread_new("LoggingThread", logging_thread_func, self);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
