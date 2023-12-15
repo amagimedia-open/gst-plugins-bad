@@ -104,6 +104,7 @@ static void log_server_stats(GstSRTServerSrc *src)
   gint64 total_runtime=0;
 
   // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
+  printf("Loggo in log_server_stats");
 
   GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
                   bytes_sent, bytes_received, total_runtime);
@@ -114,6 +115,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
   // Log server stats
+  printf("Loggo in gst_srt_src_log_stats");
   log_server_stats(src);
 
   return G_SOURCE_CONTINUE;
@@ -123,6 +125,7 @@ static gboolean logging_task_func(gpointer user_data)
 {
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
+  printf("Loggo in logging_task_func");
   // Set up a periodic task to log statistics every second
   g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
 
@@ -557,6 +560,7 @@ gst_srt_server_src_init (GstSRTServerSrc * self)
   priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
   gst_task_set_lock (priv->logging_task, &priv->task_lock);
   gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+  printf("Loggo in init");
 
   // Start the task
   gst_task_start(priv->logging_task);
