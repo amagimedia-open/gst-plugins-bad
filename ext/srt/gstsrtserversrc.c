@@ -52,8 +52,8 @@ static GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE ("src",
 
 #define GST_CAT_DEFAULT gst_debug_srt_server_src
 GST_DEBUG_CATEGORY (GST_CAT_DEFAULT);
-#define GST_SRT_SERVER_SRC_GET_PRIVATE(obj)  \
-       (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_SRT_SERVER_SRC, GstSRTServerSrcPrivate))
+#define GST_SRT_SERVER_SRC_GET_PRIVATE(obj) \
+  (G_TYPE_INSTANCE_GET_PRIVATE((obj), GST_TYPE_SRT_SERVER_SRC, GstSRTServerSrcPrivate))
 
 struct _GstSRTServerSrcPrivate
 {
