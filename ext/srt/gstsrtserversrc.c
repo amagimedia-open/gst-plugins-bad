@@ -129,30 +129,6 @@ static gboolean logging_task_func(gpointer user_data)
   return G_SOURCE_CONTINUE;
 }
 
-static gpointer logging_thread_func(gpointer user_data)
-{
-  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
-  GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE(src);
-
-  // Create a task for logging
-  GstTask *logging_task = gst_task_new(logging_task_func, src, NULL);
-  gst_task_set_lock(logging_task, &priv->task_lock);
-  gst_task_set_priority(logging_task, G_PRIORITY_DEFAULT);
-  gst_task_set_name(logging_task, "LoggingTask");
-
-  // Start the task
-  gst_task_start(logging_task);
-
-  // Run the GLib main loop
-  g_main_loop_run(priv->main_loop);
-
-  // Cleanup
-  gst_task_join(logging_task);
-  gst_task_unref(logging_task);
-
-  return NULL;
-}
-
 static void
 gst_srt_server_src_get_property (GObject * object,
     guint prop_id, GValue * value, GParamSpec * pspec)
@@ -197,13 +173,13 @@ gst_srt_server_src_finalize (GObject * object)
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
-  gst_task_stop (filter->push_task);
-  g_rec_mutex_lock (&filter->task_lock);
-  g_rec_mutex_unlock (&filter->task_lock);
-  gst_task_join (filter->push_task);
+  gst_task_stop (priv->push_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->push_task);
 
-  gst_object_unref (filter->push_task);
-  g_rec_mutex_clear (&filter->task_lock);
+  gst_object_unref (priv->push_task);
+  g_rec_mutex_clear (&priv->task_lock);
 
   if (priv->poll_id != SRT_ERROR) {
     srt_epoll_release (priv->poll_id);
@@ -576,20 +552,14 @@ static void
 gst_srt_server_src_init (GstSRTServerSrc * self)
 {
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
-
-  // Initialize GLib's threading system
-  g_thread_init(NULL);
-
-  // Create a GLib main loop
-  priv->main_loop = g_main_loop_new(NULL, FALSE);
-
+  
   // Create a new thread for logging
   priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
   gst_task_set_lock (priv->logging_task, &priv->task_lock);
   gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
 
   // Start the task
-  gst_task_start(filter->push_task);
+  gst_task_start(priv->push_task);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
