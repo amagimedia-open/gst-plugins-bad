@@ -173,6 +173,7 @@ gst_srt_server_src_set_property (GObject * object,
 static void
 gst_srt_server_src_finalize (GObject * object)
 {
+  printf("Loggo in finalize");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
@@ -200,6 +201,7 @@ gst_srt_server_src_finalize (GObject * object)
 static GstFlowReturn
 gst_srt_server_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 {
+  printf("Loggo in fill");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstFlowReturn ret = GST_FLOW_OK;
@@ -310,6 +312,7 @@ out:
 static gboolean
 gst_srt_server_src_start (GstBaseSrc * src)
 {
+  printf("Loggo in src_start");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
@@ -479,6 +482,7 @@ gst_srt_server_src_unlock_stop (GstBaseSrc * src)
 static void
 gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
 {
+  printf("Loggo in class_init");
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
   GstBaseSrcClass *gstbasesrc_class = GST_BASE_SRC_CLASS (klass);
