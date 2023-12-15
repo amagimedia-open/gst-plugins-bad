@@ -130,10 +130,11 @@ static gboolean logging_task_func(gpointer user_data)
 static gpointer logging_thread_func(gpointer user_data)
 {
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE(src);
 
   // Create a task for logging
   GstTask *logging_task = gst_task_new(logging_task_func, src, NULL);
-  gst_task_set_lock(logging_task, &src->priv->task_lock);
+  gst_task_set_lock(logging_task, &priv->task_lock);
   gst_task_set_priority(logging_task, G_PRIORITY_DEFAULT);
   gst_task_set_name(logging_task, "LoggingTask");
 
@@ -141,18 +142,13 @@ static gpointer logging_thread_func(gpointer user_data)
   gst_task_start(logging_task);
 
   // Run the GLib main loop
-  g_main_loop_run(src->priv->main_loop);
+  g_main_loop_run(priv->main_loop);
 
   // Cleanup
   gst_task_join(logging_task);
   gst_task_unref(logging_task);
 
   return NULL;
-}
-
-static void gst_srt_server_src_finalize(GObject *object)
-{
- 
 }
 
 static void
@@ -200,11 +196,11 @@ gst_srt_server_src_finalize (GObject * object)
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
   // Stop the main loop
-  g_main_loop_quit(self->priv->main_loop);
+  g_main_loop_quit(priv->main_loop);
 
   // Join the logging thread
-  g_thread_join(self->priv->logging_thread);
-  g_main_loop_unref(self->priv->main_loop);
+  g_thread_join(priv->logging_thread);
+  g_main_loop_unref(priv->main_loop);
 
   if (priv->poll_id != SRT_ERROR) {
     srt_epoll_release (priv->poll_id);
@@ -582,10 +578,10 @@ gst_srt_server_src_init (GstSRTServerSrc * self)
   g_thread_init(NULL);
 
   // Create a GLib main loop
-  src->priv->main_loop = g_main_loop_new(NULL, FALSE);
+  priv->main_loop = g_main_loop_new(NULL, FALSE);
 
   // Create a new thread for logging
-  src->priv->logging_thread = g_thread_new("LoggingThread", logging_thread_func, src);
+  priv->logging_thread = g_thread_new("LoggingThread", logging_thread_func, src);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
