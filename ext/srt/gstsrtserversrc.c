@@ -328,6 +328,14 @@ gst_srt_server_src_start (GstBaseSrc * src)
     return FALSE;
   }
 
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+
+  // Start the task
+  gst_task_start(priv->logging_task);
+
   host = gst_uri_get_host (uri);
   if (host == NULL) {
     GInetAddress *any = g_inet_address_new_any (G_SOCKET_FAMILY_IPV4);
@@ -559,13 +567,6 @@ gst_srt_server_src_init (GstSRTServerSrc * self)
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
   printf("Loggo in init\n");
-  // Create a new thread for logging
-  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
-  gst_task_set_lock (priv->logging_task, &priv->task_lock);
-  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
-
-  // Start the task
-  gst_task_start(priv->logging_task);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
