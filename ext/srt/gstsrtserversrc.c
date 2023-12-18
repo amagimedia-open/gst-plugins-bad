@@ -104,7 +104,7 @@ static void log_server_stats(GstSRTServerSrc *src)
   gint64 total_runtime=0;
 
   // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
-  printf("Loggo in log_server_stats");
+  printf("Loggo in log_server_stats\n");
 
   GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
                   bytes_sent, bytes_received, total_runtime);
@@ -115,7 +115,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
   // Log server stats
-  printf("Loggo in gst_srt_src_log_stats");
+  printf("Loggo in gst_srt_src_log_stats\n");
   log_server_stats(src);
 
   return G_SOURCE_CONTINUE;
@@ -125,7 +125,7 @@ static gboolean logging_task_func(gpointer user_data)
 {
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
-  printf("Loggo in logging_task_func");
+  printf("Loggo in logging_task_func\n");
   // Set up a periodic task to log statistics every second
   g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
 
@@ -173,7 +173,7 @@ gst_srt_server_src_set_property (GObject * object,
 static void
 gst_srt_server_src_finalize (GObject * object)
 {
-  printf("Loggo in finalize");
+  printf("Loggo in finalize\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
@@ -201,7 +201,7 @@ gst_srt_server_src_finalize (GObject * object)
 static GstFlowReturn
 gst_srt_server_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 {
-  printf("Loggo in fill");
+  printf("Loggo in fill\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstFlowReturn ret = GST_FLOW_OK;
@@ -312,7 +312,7 @@ out:
 static gboolean
 gst_srt_server_src_start (GstBaseSrc * src)
 {
-  printf("Loggo in src_start");
+  printf("Loggo in src_start\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
@@ -490,7 +490,7 @@ gst_srt_server_src_unlock_stop (GstBaseSrc * src)
 static void
 gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
 {
-  printf("Loggo in class_init");
+  printf("Loggo in class_init\n");
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
   GstBaseSrcClass *gstbasesrc_class = GST_BASE_SRC_CLASS (klass);
