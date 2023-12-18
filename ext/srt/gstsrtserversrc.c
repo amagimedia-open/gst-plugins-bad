@@ -117,12 +117,8 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   GstStructure* stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
               priv->sock);
   if (stats != NULL) {
-      gchar* stats_str = gst_structure_to_string(stats);
-      printf("Stats: %s\n", stats_str);
-      g_free(stats_str);
-
-      // free the structure when done
-      gst_structure_free(stats);
+      printf(" pktsSent %d", stats.pktSent);
+      printf(" pktsSndLoss %d", stats.pktSndLoss);
   } else {
     printf("Stats is empty..\n");
   }
