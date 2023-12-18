@@ -64,7 +64,9 @@ struct _GstSRTServerSrcPrivate
 
   gboolean has_client;
   gboolean cancelled;
-};
+  GMutex task_lock;
+  GstTask *logging_task;
+} ;
 
 #define GST_SRT_SERVER_SRC_GET_PRIVATE(obj)  \
        (G_TYPE_INSTANCE_GET_PRIVATE ((obj), GST_TYPE_SRT_SERVER_SRC, GstSRTServerSrcPrivate))
@@ -94,6 +96,41 @@ G_DEFINE_TYPE_WITH_CODE (GstSRTServerSrc, gst_srt_server_src,
     GST_TYPE_SRT_BASE_SRC, G_ADD_PRIVATE (GstSRTServerSrc)
     GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "srtserversrc", 0,
         "SRT Server Source"));
+
+static void log_server_stats(GstSRTServerSrc *src)
+{
+  // Retrieve and log statistics as needed
+  guint64 bytes_sent=0, bytes_received=0;
+  gint64 total_runtime=0;
+
+  // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
+  printf("Loggo in log_server_stats\n");
+
+  GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
+                  bytes_sent, bytes_received, total_runtime);
+}
+
+static gboolean gst_srt_server_src_log_stats(gpointer user_data)
+{
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+
+  // Log server stats
+  printf("Loggo in gst_srt_src_log_stats\n");
+  log_server_stats(src);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean logging_task_func(gpointer user_data)
+{
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+
+  printf("Loggo in logging_task_func\n");
+  // Set up a periodic task to log statistics every second
+  g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+
+  return G_SOURCE_CONTINUE;
+}
 
 static void
 gst_srt_server_src_get_property (GObject * object,
@@ -136,8 +173,17 @@ gst_srt_server_src_set_property (GObject * object,
 static void
 gst_srt_server_src_finalize (GObject * object)
 {
+  printf("Loggo in finalize\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
+
+  gst_task_stop (priv->logging_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->logging_task);
+
+  gst_object_unref (priv->logging_task);
+  g_rec_mutex_clear (&priv->task_lock);
 
   if (priv->poll_id != SRT_ERROR) {
     srt_epoll_release (priv->poll_id);
@@ -155,6 +201,7 @@ gst_srt_server_src_finalize (GObject * object)
 static GstFlowReturn
 gst_srt_server_src_fill (GstPushSrc * src, GstBuffer * outbuf)
 {
+  printf("Loggo in fill\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstFlowReturn ret = GST_FLOW_OK;
@@ -265,6 +312,7 @@ out:
 static gboolean
 gst_srt_server_src_start (GstBaseSrc * src)
 {
+  printf("Loggo in src_start\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
@@ -275,6 +323,14 @@ gst_srt_server_src_start (GstBaseSrc * src)
   GSocketAddress *socket_address;
   const gchar *host;
   int lat = base->latency;
+  
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+
+  // Start the task
+  gst_task_start(priv->logging_task);
 
   if (gst_uri_get_port (uri) == GST_URI_NO_PORT) {
     GST_ELEMENT_ERROR (src, RESOURCE, OPEN_WRITE, NULL, (("Invalid port")));
@@ -434,6 +490,7 @@ gst_srt_server_src_unlock_stop (GstBaseSrc * src)
 static void
 gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
 {
+  printf("Loggo in class_init\n");
   GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
   GstElementClass *gstelement_class = GST_ELEMENT_CLASS (klass);
   GstBaseSrcClass *gstbasesrc_class = GST_BASE_SRC_CLASS (klass);
@@ -510,6 +567,15 @@ static void
 gst_srt_server_src_init (GstSRTServerSrc * self)
 {
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
+
+  printf("Loggo in init\n");
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+
+  // Start the task
+  gst_task_start(priv->logging_task);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
