@@ -549,7 +549,7 @@ gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
       "Receive data over the network via SRT",
       "Justin Kim <justin.kim@collabora.com>");
 
-  gstbasesrc_class->start = GST_DEBUG_FUNCPTR (gst_srt_server_src_start);]
+  gstbasesrc_class->start = GST_DEBUG_FUNCPTR (gst_srt_server_src_start);
   gstbasesrc_class->stop = GST_DEBUG_FUNCPTR (gst_srt_server_src_stop);
   gstbasesrc_class->unlock = GST_DEBUG_FUNCPTR (gst_srt_server_src_unlock);
   gstbasesrc_class->unlock_stop =
