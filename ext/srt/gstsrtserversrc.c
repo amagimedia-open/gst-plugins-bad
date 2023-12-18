@@ -367,10 +367,6 @@ gst_srt_server_src_start (GstBaseSrc * src)
   gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
   printf("printo 5 in start\n");
 
-  // Start the task
-  gst_task_start(priv->logging_task);
-  printf("printo 6 in start\n");
-
   host = gst_uri_get_host (uri);
   if (host == NULL) {
     GInetAddress *any = g_inet_address_new_any (G_SOCKET_FAMILY_IPV4);
@@ -447,6 +443,10 @@ gst_srt_server_src_start (GstBaseSrc * src)
   g_clear_pointer (&uri, gst_uri_unref);
   g_clear_object (&socket_address);
 
+  // Start the task
+  gst_task_start(priv->logging_task);
+  printf("printo 6 in start\n");
+  
   return TRUE;
 
 failed:
