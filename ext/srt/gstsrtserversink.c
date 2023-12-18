@@ -191,7 +191,7 @@ gst_srt_server_sink_set_property (GObject * object,
   }
 }
 
-static void log_server_stats(GstSRTServerSrc *src)
+static void log_server_stats(GstSRTServerSink *src)
 {
   // Retrieve and log statistics as needed
   guint64 bytes_sent=0, bytes_received=0;
@@ -206,7 +206,7 @@ static void log_server_stats(GstSRTServerSrc *src)
 
 static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
-  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
 
   // Log server stats
   printf("Loggo in gst_srt_src_log_stats\n");
@@ -217,7 +217,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 
 static gboolean logging_task_func(gpointer user_data)
 {
-  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
 
   // Set up a periodic task to log statistics every second
   g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
