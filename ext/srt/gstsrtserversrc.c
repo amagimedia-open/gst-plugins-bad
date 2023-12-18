@@ -178,6 +178,14 @@ gst_srt_server_src_finalize (GObject * object)
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
 
+  gst_task_stop (priv->logging_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->logging_task);
+
+  gst_object_unref (priv->logging_task);
+  g_rec_mutex_clear (&priv->task_lock);
+
   if (priv->poll_id != SRT_ERROR) {
     srt_epoll_release (priv->poll_id);
     priv->poll_id = SRT_ERROR;
@@ -429,14 +437,6 @@ gst_srt_server_src_stop (GstBaseSrc * src)
 {
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
-
-  gst_task_stop (priv->logging_task);
-  g_rec_mutex_lock (&priv->task_lock);
-  g_rec_mutex_unlock (&priv->task_lock);
-  gst_task_join (priv->logging_task);
-
-  gst_object_unref (priv->logging_task);
-  g_rec_mutex_clear (&priv->task_lock);
 
   if (priv->client_sock != SRT_INVALID_SOCK) {
     g_signal_emit (self, signals[SIG_CLIENT_ADDED], 0,
