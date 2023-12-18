@@ -324,6 +324,10 @@ gst_srt_server_src_start (GstBaseSrc * src)
   const gchar *host;
   int lat = base->latency;
 
+
+  // Start the task
+  gst_task_start(priv->logging_task);
+
   if (gst_uri_get_port (uri) == GST_URI_NO_PORT) {
     GST_ELEMENT_ERROR (src, RESOURCE, OPEN_WRITE, NULL, (("Invalid port")));
     return FALSE;
@@ -546,7 +550,7 @@ gst_srt_server_src_class_init (GstSRTServerSrcClass * klass)
       "Receive data over the network via SRT",
       "Justin Kim <justin.kim@collabora.com>");
 
-  gstbasesrc_class->start = GST_DEBUG_FUNCPTR (gst_srt_server_src_start);
+  gstbasesrc_class->start = GST_DEBUG_FUNCPTR (gst_srt_server_src_start);]gs
   gstbasesrc_class->stop = GST_DEBUG_FUNCPTR (gst_srt_server_src_stop);
   gstbasesrc_class->unlock = GST_DEBUG_FUNCPTR (gst_srt_server_src_unlock);
   gstbasesrc_class->unlock_stop =
@@ -565,9 +569,6 @@ gst_srt_server_src_init (GstSRTServerSrc * self)
   gst_task_set_lock (priv->logging_task, &priv->task_lock);
   gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
   printf("Loggo in init\n");
-
-  // Start the task
-  gst_task_start(priv->logging_task);
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;
