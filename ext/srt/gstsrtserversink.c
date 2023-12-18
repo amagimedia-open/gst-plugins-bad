@@ -220,7 +220,8 @@ static gboolean logging_task_func(gpointer user_data)
   GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
 
   // Set up a periodic task to log statistics every second
-  g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+  gst_srt_server_src_log_stats(src);
 
   return G_SOURCE_CONTINUE;
 }
