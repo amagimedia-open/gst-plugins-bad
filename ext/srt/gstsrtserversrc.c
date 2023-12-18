@@ -117,8 +117,8 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   GstStructure* stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
               priv->sock);
   if (stats != NULL) {
-      printf(" pktsSent %d", stats.pktSent);
-      printf(" pktsSndLoss %d", stats.pktSndLoss);
+      printf(" pktsSent %d", stats->pktSent);
+      printf(" pktsSndLoss %d", stats->pktSndLoss);
   } else {
     printf("Stats is empty..\n");
   }
