@@ -97,14 +97,14 @@ G_DEFINE_TYPE_WITH_CODE (GstSRTServerSrc, gst_srt_server_src,
     GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "srtserversrc", 0,
         "SRT Server Source"));
 
-static void log_server_stats(GstSRTServerSink *src)
+static void log_server_stats(GstSRTServerSrc *src)
 {
   // Retrieve and log statistics as needed
   guint64 bytes_sent=0, bytes_received=0;
   gint64 total_runtime=0;
 
   // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
-  printf("Loggo in log_server_statss\n");
+  printf("Loggo in log_server_stats\n");
 
   GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
                   bytes_sent, bytes_received, total_runtime);
@@ -112,7 +112,7 @@ static void log_server_stats(GstSRTServerSink *src)
 
 static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
   // Log server stats
   printf("Loggo in gst_srt_src_log_stats\n");
@@ -123,12 +123,11 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 
 static gboolean logging_task_func(gpointer user_data)
 {
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
 
-  // Set up a periodic task to log statistics every second
-  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
   printf("Loggo in logging_task_func\n");
-  gst_srt_server_src_log_stats(src);
+  // Set up a periodic task to log statistics every second
+  g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
 
   return G_SOURCE_CONTINUE;
 }
