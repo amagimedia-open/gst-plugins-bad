@@ -315,7 +315,7 @@ out:
 static gboolean
 gst_srt_server_src_start (GstBaseSrc * src)
 {
-  printf("printo 1 in start");
+  printf("printo 1 in start\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
@@ -332,18 +332,18 @@ gst_srt_server_src_start (GstBaseSrc * src)
     return FALSE;
   }
 
-  printf("printo 2 in start");
+  printf("printo 2 in start\n");
   // Create a new thread for logging
   priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
-  printf("printo 3 in start");
+  printf("printo 3 in start\n");
   gst_task_set_lock (priv->logging_task, &priv->task_lock);
-  printf("printo 4 in start");
+  printf("printo 4 in start\n");
   gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
-  printf("printo 5 in start");
+  printf("printo 5 in start\n");
 
   // Start the task
   gst_task_start(priv->logging_task);
-  printf("printo 6 in start");
+  printf("printo 6 in start\n");
 
   host = gst_uri_get_host (uri);
   if (host == NULL) {
