@@ -118,7 +118,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
               priv->sock);
   if (stats != NULL) {
       gchar* stats_str = gst_structure_to_string(stats);
-      g_print("Stats: %s\n", stats_str);
+      printf("Stats: %s\n", stats_str);
       g_free(stats_str);
 
       // free the structure when done
