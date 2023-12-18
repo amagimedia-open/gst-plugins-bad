@@ -311,6 +311,10 @@ gst_srt_server_sink_start (GstBaseSink * sink)
   const gchar *host;
   int lat = base->latency;
 
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+
   // Start the task
   gst_task_start(priv->logging_task);
 
@@ -633,8 +637,5 @@ gst_srt_server_sink_init (GstSRTServerSink * self)
 {
   GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
   priv->poll_timeout = SRT_DEFAULT_POLL_TIMEOUT;
-  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
-  gst_task_set_lock (priv->logging_task, &priv->task_lock);
-  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
   printf("Loggo in init\n");
 }
