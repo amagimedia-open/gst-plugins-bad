@@ -324,7 +324,6 @@ gst_srt_server_src_start (GstBaseSrc * src)
   const gchar *host;
   int lat = base->latency;
 
-
   // Start the task
   gst_task_start(priv->logging_task);
 
