@@ -116,30 +116,30 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (src);
   printf("Before stats\n");
 
-  if(priv->client_sockaddr == NULL){
-    printf("PRIV_>SOCKADDR is NULL! \n");
-  }
-  if (priv->sock == NULL) {
-    printf("PRIV_>SOCK is NULL! \n");
-  }
-  printf("Before 1\n");
-  GstStructure* stats = gst_structure_new ("application/x-srt-statistics",
-      "sockaddr", G_TYPE_SOCKET_ADDRESS, priv->client_sockaddr, NULL);
+  // if(priv->client_sockaddr == NULL){
+  //   printf("PRIV_>SOCKADDR is NULL! \n");
+  // }
+  // if (priv->sock == NULL) {
+  //   printf("PRIV_>SOCK is NULL! \n");
+  // }
+  // printf("Before 1\n");
+  // GstStructure* stats = gst_structure_new ("application/x-srt-statistics",
+  //     "sockaddr", G_TYPE_SOCKET_ADDRESS, priv->client_sockaddr, NULL);
   
-  printf("Middlee\n");
+  // printf("Middlee\n");
 
-  stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
-              priv->sock);
-    printf("After stats\n");
-  if (stats != NULL) {
-    gint64 packets_sent;
-        if (gst_structure_get_int64(stats, "packets-sent", &packets_sent)) {
-            printf("Before pktssent\n");
-            printf(" pktsSent %d\n", packets_sent);
-        }
-  } else {
-    printf("Stats is empty..\n");
-  }
+  // stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
+  //             priv->sock);
+  //   printf("After stats\n");
+  // if (stats != NULL) {
+  //   gint64 packets_sent;
+  //       if (gst_structure_get_int64(stats, "packets-sent", &packets_sent)) {
+  //           printf("Before pktssent\n");
+  //           printf(" pktsSent %d\n", packets_sent);
+  //       }
+  // } else {
+  //   printf("Stats is empty..\n");
+  // }
   // Log server stats
   printf("Loggo in gst_srt_src_log_stats\n");
   log_server_stats(src);
