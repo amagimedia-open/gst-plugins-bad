@@ -113,7 +113,18 @@ static void log_server_stats(GstSRTServerSrc *src)
 static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+  GstStructure* stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
+              priv->sock);
+  if (stats != NULL) {
+      gchar* stats_str = gst_structure_to_string(stats);
+      g_print("Stats: %s\n", stats_str);
+      g_free(stats_str);
 
+      // free the structure when done
+      gst_structure_free(stats);
+  } else {
+    printf("Stats is empty..\n");
+  }
   // Log server stats
   printf("Loggo in gst_srt_src_log_stats\n");
   log_server_stats(src);
