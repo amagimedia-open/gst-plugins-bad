@@ -114,12 +114,15 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
   GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (src);
+  printf("Before stats\n");
   GstStructure* stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
               priv->sock);
+    printf("After stats\n");
   if (stats != NULL) {
     gint64 packets_sent;
         if (gst_structure_get_int64(stats, "packets-sent", &packets_sent)) {
-            printf(" pktsSent %d", packets_sent);
+            printf("Before pktssent\n");
+            printf(" pktsSent %d\n", packets_sent);
         }
   } else {
     printf("Stats is empty..\n");
