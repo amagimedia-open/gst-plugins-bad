@@ -68,8 +68,6 @@ struct _GstSRTServerSinkPrivate
   GThread *thread;
 
   GList *clients;
-  GMutex task_lock;
-  GstTask *logging_task;
 };
 
 #define GST_SRT_SERVER_SINK_GET_PRIVATE(obj)  \
@@ -191,42 +189,6 @@ gst_srt_server_sink_set_property (GObject * object,
   }
 }
 
-static void log_server_stats(GstSRTServerSink *src)
-{
-  // Retrieve and log statistics as needed
-  guint64 bytes_sent=0, bytes_received=0;
-  gint64 total_runtime=0;
-
-  // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
-  printf("Loggo in log_server_statss\n");
-
-  GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
-                  bytes_sent, bytes_received, total_runtime);
-}
-
-static gboolean gst_srt_server_src_log_stats(gpointer user_data)
-{
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
-
-  // Log server stats
-  printf("Loggo in gst_srt_src_log_stats\n");
-  log_server_stats(src);
-
-  return G_SOURCE_CONTINUE;
-}
-
-static gboolean logging_task_func(gpointer user_data)
-{
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
-
-  // Set up a periodic task to log statistics every second
-  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
-  printf("Loggo in logging_task_func\n");
-  gst_srt_server_src_log_stats(src);
-
-  return G_SOURCE_CONTINUE;
-}
-
 static gboolean
 idle_listen_callback (gpointer data)
 {
@@ -298,7 +260,6 @@ thread_func (gpointer data)
 static gboolean
 gst_srt_server_sink_start (GstBaseSink * sink)
 {
-  printf("Loggo in start\n");
   GstSRTServerSink *self = GST_SRT_SERVER_SINK (sink);
   GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
   GstSRTBaseSink *base = GST_SRT_BASE_SINK (sink);
@@ -310,13 +271,6 @@ gst_srt_server_sink_start (GstBaseSink * sink)
   size_t sa_len;
   const gchar *host;
   int lat = base->latency;
-
-  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
-  gst_task_set_lock (priv->logging_task, &priv->task_lock);
-  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
-
-  // Start the task
-  gst_task_start(priv->logging_task);
 
   if (gst_uri_get_port (uri) == GST_URI_NO_PORT) {
     GST_ELEMENT_ERROR (sink, RESOURCE, OPEN_WRITE, NULL, (("Invalid port")));
@@ -493,7 +447,6 @@ gst_srt_server_sink_send_buffer (GstSRTBaseSink * sink,
 static gboolean
 gst_srt_server_sink_stop (GstBaseSink * sink)
 {
-  printf("Loggo in stop\n");
   GstSRTServerSink *self = GST_SRT_SERVER_SINK (sink);
   GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
   GList *clients;
@@ -524,14 +477,6 @@ gst_srt_server_sink_stop (GstBaseSink * sink)
     g_source_destroy (priv->server_source);
     g_clear_pointer (&priv->server_source, g_source_unref);
   }
-
-  gst_task_stop (priv->logging_task);
-  g_rec_mutex_lock (&priv->task_lock);
-  g_rec_mutex_unlock (&priv->task_lock);
-  gst_task_join (priv->logging_task);
-
-  gst_object_unref (priv->logging_task);
-  g_rec_mutex_clear (&priv->task_lock);
 
   g_clear_pointer (&priv->context, g_main_context_unref);
 
@@ -637,5 +582,4 @@ gst_srt_server_sink_init (GstSRTServerSink * self)
 {
   GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
   priv->poll_timeout = SRT_DEFAULT_POLL_TIMEOUT;
-  printf("Loggo in init\n");
 }
