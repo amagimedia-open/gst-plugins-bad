@@ -129,7 +129,7 @@ static gboolean logging_task_func(gpointer user_data)
   // Set up a periodic task to log statistics every second
   // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
   sleep(10);
-  gst_srt_base_src_get_stats(src);
+  gst_srt_server_src_log_stats(src);
 
   return G_SOURCE_CONTINUE;
 }
