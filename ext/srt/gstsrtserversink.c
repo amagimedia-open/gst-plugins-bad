@@ -131,11 +131,34 @@ static void log_server_stats(GstSRTServerSink *src)
 
 static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
-  GstSRTServerSink *sink = GST_SRT_SERVER_SINK(user_data);
+  GstSRTServerSink *self = GST_SRT_SERVER_SINK(user_data);
+  GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
+  printf("Before stats\n");
 
+  if(priv->clients == NULL){
+    printf("PRIV_>CLIENT is NULL! \n");
+    if(priv->clients->)
+  }
+
+  GList *item;
+  GValue * value;
+  GST_OBJECT_LOCK (self);
+  for (item = priv->clients; item; item = item->next) {
+      SRTClient *client = item->data;
+      GValue tmp = G_VALUE_INIT;
+
+      g_value_init (&tmp, GST_TYPE_STRUCTURE);
+      if(client->sockaddr != NULL and client->sock != NULL){
+        printf("Both are not null, will proceed..\n");
+      } else {
+        printf("NULL again, can't proceed\n");
+      }
+      g_value_take_boxed (&tmp, gst_srt_base_sink_get_stats (client->sockaddr,
+                client->sock));
+      gst_value_array_append_and_take_value (value, &tmp);
+  }
+  GST_OBJECT_UNLOCK (self);
   // Log server stats
-  printf("Loggo in gst_srt_src_log_stats\n");
-  log_server_stats(sink);
 
   return G_SOURCE_CONTINUE;
 }
