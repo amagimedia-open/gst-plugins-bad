@@ -119,7 +119,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
   if(priv->client_sockaddr == NULL){
     printf("PRIV_>SOCKADDR is NULL! \n");
   }
-  if (priv->sock == NULL) {
+  while (priv->sock == NULL) {
     printf("PRIV_>SOCK is NULL! \n");
   }
   printf("Before 1\n");
