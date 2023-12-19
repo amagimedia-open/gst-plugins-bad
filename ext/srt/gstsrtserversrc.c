@@ -120,7 +120,6 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
     printf("PRIV_>SOCKADDR is NULL! \n");
   }
   while (priv->sock == NULL) {
-    printf("PRIV_>SOCK is NULL! \n");
   }
   printf("Before 1\n");
   GstStructure* stats = gst_structure_new ("application/x-srt-statistics",
