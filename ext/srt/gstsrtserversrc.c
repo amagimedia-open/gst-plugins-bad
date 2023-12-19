@@ -431,9 +431,6 @@ gst_srt_server_src_start (GstBaseSrc * src)
     goto failed;
   }
 
-  g_clear_pointer (&uri, gst_uri_unref);
-  g_clear_object (&socket_address);
-
   printf("printo 2 in start\n");
   // Create a new thread for logging
   priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
@@ -445,6 +442,9 @@ gst_srt_server_src_start (GstBaseSrc * src)
   // Start the task
   gst_task_start(priv->logging_task);
   printf("printo 6 in start\n");
+  
+  g_clear_pointer (&uri, gst_uri_unref);
+  g_clear_object (&socket_address);
 
   return TRUE;
 
