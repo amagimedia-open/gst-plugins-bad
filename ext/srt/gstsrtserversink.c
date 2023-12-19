@@ -131,23 +131,23 @@ static void log_server_stats(GstSRTServerSink *src)
 
 static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 {
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSink *sink = GST_SRT_SERVER_SINK(user_data);
 
   // Log server stats
   printf("Loggo in gst_srt_src_log_stats\n");
-  log_server_stats(src);
+  log_server_stats(sink);
 
   return G_SOURCE_CONTINUE;
 }
 
 static gboolean logging_task_func(gpointer user_data)
 {
-  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSink *sink = GST_SRT_SERVER_SINK(user_data);
 
   // Set up a periodic task to log statistics every second
   // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
   printf("Loggo in logging_task_func\n");
-  gst_srt_server_src_log_stats(src);
+  gst_srt_server_src_log_stats(sink);
 
   return G_SOURCE_CONTINUE;
 }
@@ -408,6 +408,17 @@ gst_srt_server_sink_start (GstBaseSink * sink)
 
   g_clear_pointer (&uri, gst_uri_unref);
   g_clear_object (&socket_address);
+  printf("printo 2 in start\n");
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  printf("printo 3 in start\n");
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  printf("printo 4 in start\n");
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+  printf("printo 5 in start\n");
+  // Start the task
+  gst_task_start(priv->logging_task);
+  printf("printo 6 in start\n");
 
   return ret;
 
