@@ -141,8 +141,11 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 
   GList *item;
   GValue * value;
+  printf("Before Lock\n");
   GST_OBJECT_LOCK (self);
+  printf("Inside Lock\n");
   for (item = priv->clients; item; item = item->next) {
+      printf("Inside Loop\n");
       SRTClient *client = item->data;
       GValue tmp = G_VALUE_INIT;
 
@@ -157,6 +160,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
       gst_value_array_append_and_take_value (value, &tmp);
   }
   GST_OBJECT_UNLOCK (self);
+  printf("After Lock\n");
   // Log server stats
 
   return G_SOURCE_CONTINUE;
