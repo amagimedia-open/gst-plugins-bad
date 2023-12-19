@@ -68,6 +68,8 @@ struct _GstSRTServerSinkPrivate
   GThread *thread;
 
   GList *clients;
+  GMutex task_lock;
+  GstTask *logging_task;
 };
 
 #define GST_SRT_SERVER_SINK_GET_PRIVATE(obj)  \
@@ -112,6 +114,42 @@ srt_client_new (void)
   SRTClient *client = g_new0 (SRTClient, 1);
   client->sock = SRT_INVALID_SOCK;
   return client;
+}
+
+static void log_server_stats(GstSRTServerSink *src)
+{
+  // Retrieve and log statistics as needed
+  guint64 bytes_sent=0, bytes_received=0;
+  gint64 total_runtime=0;
+
+  // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
+  printf("Loggo in log_server_statss\n");
+
+  GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
+                  bytes_sent, bytes_received, total_runtime);
+}
+
+static gboolean gst_srt_server_src_log_stats(gpointer user_data)
+{
+  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+
+  // Log server stats
+  printf("Loggo in gst_srt_src_log_stats\n");
+  log_server_stats(src);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean logging_task_func(gpointer user_data)
+{
+  GstSRTServerSink *src = GST_SRT_SERVER_SRC(user_data);
+
+  // Set up a periodic task to log statistics every second
+  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+  printf("Loggo in logging_task_func\n");
+  gst_srt_server_src_log_stats(src);
+
+  return G_SOURCE_CONTINUE;
 }
 
 static void
@@ -457,6 +495,14 @@ gst_srt_server_sink_stop (GstBaseSink * sink)
   clients = priv->clients;
   priv->clients = NULL;
   GST_OBJECT_UNLOCK (sink);
+
+  gst_task_stop (priv->logging_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->logging_task);
+
+  gst_object_unref (priv->logging_task);
+  g_rec_mutex_clear (&priv->task_lock);
 
   g_list_foreach (clients, (GFunc) srt_emit_client_removed, self);
   g_list_free_full (clients, (GDestroyNotify) srt_client_free);
