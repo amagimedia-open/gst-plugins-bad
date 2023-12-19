@@ -137,7 +137,6 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
 
   if(priv->clients == NULL){
     printf("PRIV_>CLIENT is NULL! \n");
-    if(priv->clients->)
   }
 
   GList *item;
@@ -148,7 +147,7 @@ static gboolean gst_srt_server_src_log_stats(gpointer user_data)
       GValue tmp = G_VALUE_INIT;
 
       g_value_init (&tmp, GST_TYPE_STRUCTURE);
-      if(client->sockaddr != NULL and client->sock != NULL){
+      if(client->sockaddr != NULL && client->sock != NULL){
         printf("Both are not null, will proceed..\n");
       } else {
         printf("NULL again, can't proceed\n");
