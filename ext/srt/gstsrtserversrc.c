@@ -64,6 +64,8 @@ struct _GstSRTServerSrcPrivate
 
   gboolean has_client;
   gboolean cancelled;
+  GMutex task_lock;
+  GstTask *logging_task;
 };
 
 #define GST_SRT_SERVER_SRC_GET_PRIVATE(obj)  \
@@ -94,6 +96,71 @@ G_DEFINE_TYPE_WITH_CODE (GstSRTServerSrc, gst_srt_server_src,
     GST_TYPE_SRT_BASE_SRC, G_ADD_PRIVATE (GstSRTServerSrc)
     GST_DEBUG_CATEGORY_INIT (GST_CAT_DEFAULT, "srtserversrc", 0,
         "SRT Server Source"));
+
+static void log_server_stats(GstSRTServerSrc *src)
+{
+  // Retrieve and log statistics as needed
+  guint64 bytes_sent=0, bytes_received=0;
+  gint64 total_runtime=0;
+
+  // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
+  printf("Loggo in log_server_stats\n");
+
+  GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
+                  bytes_sent, bytes_received, total_runtime);
+}
+
+static gboolean gst_srt_server_src_log_stats(gpointer user_data)
+{
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+  GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (src);
+  printf("Before stats\n");
+
+  if(priv->client_sockaddr == NULL){
+    printf("PRIV_>SOCKADDR is NULL! \n");
+  }
+  while (priv->sock == NULL) {
+  }
+  printf("Before 1\n");
+  GstStructure* stats = gst_structure_new ("application/x-srt-statistics",
+      "sockaddr", G_TYPE_SOCKET_ADDRESS, priv->client_sockaddr, NULL);
+  
+  printf("Middlee\n");
+
+  stats = gst_srt_base_src_get_stats (priv->client_sockaddr,
+              priv->sock);
+    printf("After stats\n");
+  if (stats != NULL) {
+    gint64 packets_sent;
+        if (gst_structure_get_int64(stats, "packets-sent", &packets_sent)) {
+            printf("Before pktssent\n");
+            printf(" pktsSent %d\n", packets_sent);
+        }
+  } else {
+    printf("Stats is empty..\n");
+  }
+  // Log server stats
+  printf("Loggo in gst_srt_src_log_stats\n");
+  log_server_stats(src);
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean logging_task_func(gpointer user_data)
+{
+  GstSRTServerSrc *src = GST_SRT_SERVER_SRC(user_data);
+
+  printf("Loggo in logging_task_func\n");
+  // Set up a periodic task to log statistics every second
+  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+  while(1){
+    sleep(10);
+    gst_srt_server_src_log_stats(src);
+  }
+
+
+  return G_SOURCE_CONTINUE;
+}
 
 static void
 gst_srt_server_src_get_property (GObject * object,
@@ -138,6 +205,14 @@ gst_srt_server_src_finalize (GObject * object)
 {
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (object);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
+
+  gst_task_stop (priv->logging_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->logging_task);
+
+  gst_object_unref (priv->logging_task);
+  g_rec_mutex_clear (&priv->task_lock);
 
   if (priv->poll_id != SRT_ERROR) {
     srt_epoll_release (priv->poll_id);
@@ -265,6 +340,7 @@ out:
 static gboolean
 gst_srt_server_src_start (GstBaseSrc * src)
 {
+  printf("printo 1 in start\n");
   GstSRTServerSrc *self = GST_SRT_SERVER_SRC (src);
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
   GstSRTBaseSrc *base = GST_SRT_BASE_SRC (src);
@@ -353,6 +429,18 @@ gst_srt_server_src_start (GstBaseSrc * src)
         ("failed to listen SRT socket (reason: %s)", srt_getlasterror_str ()));
     goto failed;
   }
+
+  printf("printo 2 in start\n");
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  printf("printo 3 in start\n");
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  printf("printo 4 in start\n");
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+  printf("printo 5 in start\n");
+  // Start the task
+  gst_task_start(priv->logging_task);
+  printf("printo 6 in start\n");
 
   g_clear_pointer (&uri, gst_uri_unref);
   g_clear_object (&socket_address);
@@ -510,6 +598,8 @@ static void
 gst_srt_server_src_init (GstSRTServerSrc * self)
 {
   GstSRTServerSrcPrivate *priv = GST_SRT_SERVER_SRC_GET_PRIVATE (self);
+
+  printf("Loggo in init\n");
 
   priv->sock = SRT_INVALID_SOCK;
   priv->client_sock = SRT_INVALID_SOCK;

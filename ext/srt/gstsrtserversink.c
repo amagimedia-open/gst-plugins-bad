@@ -68,6 +68,8 @@ struct _GstSRTServerSinkPrivate
   GThread *thread;
 
   GList *clients;
+  GMutex task_lock;
+  GstTask *logging_task;
 };
 
 #define GST_SRT_SERVER_SINK_GET_PRIVATE(obj)  \
@@ -112,6 +114,66 @@ srt_client_new (void)
   SRTClient *client = g_new0 (SRTClient, 1);
   client->sock = SRT_INVALID_SOCK;
   return client;
+}
+
+static void log_server_stats(GstSRTServerSink *src)
+{
+  // Retrieve and log statistics as needed
+  guint64 bytes_sent=0, bytes_received=0;
+  gint64 total_runtime=0;
+
+  // gst_srt_base_src_get_stats(GST_SRT_BASE_SRC(src), &bytes_sent, &bytes_received, &total_runtime);
+  printf("Loggo in log_server_statss\n");
+
+  GST_INFO_OBJECT(src, "Loggo Server Stats - Bytes Sent: %" G_GUINT64_FORMAT ", Bytes Received: %" G_GUINT64_FORMAT ", Total Runtime: %" G_GINT64_FORMAT " milliseconds",
+                  bytes_sent, bytes_received, total_runtime);
+}
+
+static gboolean gst_srt_server_src_log_stats(gpointer user_data)
+{
+  GstSRTServerSink *self = GST_SRT_SERVER_SINK(user_data);
+  GstSRTServerSinkPrivate *priv = GST_SRT_SERVER_SINK_GET_PRIVATE (self);
+  printf("Before stats\n");
+
+  if(priv->clients == NULL){
+    printf("PRIV_>CLIENT is NULL! \n");
+  }
+
+  GList *item;
+  GValue * value;
+  printf("Before Lock\n");
+  printf("Inside Lock\n");
+  for (item = priv->clients; item; item = item->next) {
+      printf("Inside Loop\n");
+      SRTClient *client = item->data;
+      GValue tmp = G_VALUE_INIT;
+
+      g_value_init (&tmp, GST_TYPE_STRUCTURE);
+      if(client->sockaddr != NULL && client->sock != NULL){
+        printf("Both are not null, will proceed..\n");
+      } else {
+        printf("NULL again, can't proceed\n");
+      }
+      g_value_take_boxed (&tmp, gst_srt_base_sink_get_stats (client->sockaddr,
+                client->sock));
+      gst_value_array_append_and_take_value (value, &tmp);
+  }
+  printf("After Lock\n");
+  // Log server stats
+
+  return G_SOURCE_CONTINUE;
+}
+
+static gboolean logging_task_func(gpointer user_data)
+{
+  GstSRTServerSink *sink = GST_SRT_SERVER_SINK(user_data);
+
+  // Set up a periodic task to log statistics every second
+  // g_timeout_add_seconds(SRT_DEFAULT_POLL_TIMEOUT, gst_srt_server_src_log_stats, src);
+  printf("Loggo in logging_task_func\n");
+  gst_srt_server_src_log_stats(sink);
+
+  return G_SOURCE_CONTINUE;
 }
 
 static void
@@ -370,6 +432,17 @@ gst_srt_server_sink_start (GstBaseSink * sink)
 
   g_clear_pointer (&uri, gst_uri_unref);
   g_clear_object (&socket_address);
+  printf("printo 2 in start\n");
+  // Create a new thread for logging
+  priv->logging_task = gst_task_new ((GstTaskFunction) logging_task_func, priv, NULL);
+  printf("printo 3 in start\n");
+  gst_task_set_lock (priv->logging_task, &priv->task_lock);
+  printf("printo 4 in start\n");
+  gst_object_set_name(GST_OBJECT(priv->logging_task), "srt_logging_task");
+  printf("printo 5 in start\n");
+  // Start the task
+  gst_task_start(priv->logging_task);
+  printf("printo 6 in start\n");
 
   return ret;
 
@@ -457,6 +530,14 @@ gst_srt_server_sink_stop (GstBaseSink * sink)
   clients = priv->clients;
   priv->clients = NULL;
   GST_OBJECT_UNLOCK (sink);
+
+  gst_task_stop (priv->logging_task);
+  g_rec_mutex_lock (&priv->task_lock);
+  g_rec_mutex_unlock (&priv->task_lock);
+  gst_task_join (priv->logging_task);
+
+  gst_object_unref (priv->logging_task);
+  g_rec_mutex_clear (&priv->task_lock);
 
   g_list_foreach (clients, (GFunc) srt_emit_client_removed, self);
   g_list_free_full (clients, (GDestroyNotify) srt_client_free);
