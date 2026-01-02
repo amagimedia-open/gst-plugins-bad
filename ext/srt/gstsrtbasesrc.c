@@ -298,34 +298,30 @@ gst_srt_base_src_get_stats (GSocketAddress * sockaddr, SRTSOCKET sock)
   ret = srt_bstats (sock, &stats, 0);
   if (ret >= 0) {
     gst_structure_set (s,
-        /* number of sent data packets, including retransmissions */
-        "packets-sent", G_TYPE_INT64, stats.pktSent,
-        /* number of lost packets (sender side) */
-        "packets-sent-lost", G_TYPE_INT, stats.pktSndLoss,
-        /* number of retransmitted packets */
-        "packets-retransmitted", G_TYPE_INT, stats.pktRetrans,
-        /* number of received ACK packets */
-        "packet-ack-received", G_TYPE_INT, stats.pktRecvACK,
-        /* number of received NAK packets */
-        "packet-nack-received", G_TYPE_INT, stats.pktRecvNAK,
-        /* time duration when UDT is sending data (idle time exclusive) */
-        "send-duration-us", G_TYPE_INT64, stats.usSndDuration,
-        /* number of sent data bytes, including retransmissions */
-        "bytes-sent", G_TYPE_UINT64, stats.byteSent,
-        /* number of retransmitted bytes */
-        "bytes-retransmitted", G_TYPE_UINT64, stats.byteRetrans,
-        /* number of too-late-to-send dropped bytes */
-        "bytes-sent-dropped", G_TYPE_UINT64, stats.byteSndDrop,
-        /* number of too-late-to-send dropped packets */
-        "packets-sent-dropped", G_TYPE_INT, stats.pktSndDrop,
-        /* sending rate in Mb/s */
-        "send-rate-mbps", G_TYPE_DOUBLE, stats.msRTT,
+        /* number of received data packets */
+        "packets-received", G_TYPE_INT64, stats.pktRecv,
+        /* number of lost packets (receiver side) */
+        "packets-received-lost", G_TYPE_INT, stats.pktRcvLoss,
+        /* number of retransmitted packets (receiver side) */
+        "packets-received-retransmitted", G_TYPE_INT, stats.pktRcvRetrans,
+        /* number of ACK packets sent by receiver */
+        "packet-ack-received", G_TYPE_INT, stats.pktSentACK,
+        /* number of NAK packets sent by receiver */
+        "packet-nack-received", G_TYPE_INT, stats.pktSentNAK,
+        /* number of too-late-to play missing packets */
+        "packets-received-dropped", G_TYPE_INT, stats.pktRcvDrop,
+        /* number of received AND IGNORED packets due to having come too late */
+        "packets-received-belated", G_TYPE_INT, stats.pktRcvBelated,
+        /* size of order discrepancy in received sequences */
+        "packets-received-reorder-distance", G_TYPE_INT, stats.pktReorderDistance,
+        /* receiving rate in Mb/s */
+        "receive-rate-mbps", G_TYPE_DOUBLE, stats.mbpsRecvRate,
         /* estimated bandwidth, in Mb/s */
         "bandwidth-mbps", G_TYPE_DOUBLE, stats.mbpsBandwidth,
-        /* busy sending time (i.e., idle time exclusive) */
-        "send-duration-us", G_TYPE_UINT64, stats.usSndDuration,
+        /* round-trip time in milliseconds */
         "rtt-ms", G_TYPE_DOUBLE, stats.msRTT,
-        "negotiated-latency-ms", G_TYPE_INT, stats.msSndTsbPdDelay, NULL);
+        /* negotiated latency in milliseconds */
+        "negotiated-latency-ms", G_TYPE_INT, stats.msRcvTsbPdDelay, NULL);
   }
 
   g_value_init (&v, G_TYPE_STRING);
