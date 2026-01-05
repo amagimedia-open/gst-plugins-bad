@@ -108,7 +108,7 @@ gst_srt_server_src_get_property (GObject * object,
       break;
     case PROP_STATS:
       g_value_take_boxed (value, gst_srt_base_src_get_stats (priv->client_sockaddr,
-              priv->sock));
+              priv->client_sock));
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
