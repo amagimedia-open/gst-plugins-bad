@@ -305,9 +305,9 @@ gst_srt_base_src_get_stats (GSocketAddress * sockaddr, SRTSOCKET sock)
         /* number of retransmitted packets (receiver side) */
         "packets-received-retransmitted", G_TYPE_INT, stats.pktRcvRetrans,
         /* number of ACK packets sent by receiver */
-        "packet-ack-received", G_TYPE_INT, stats.pktSentACK,
+        "packet-ack-sent", G_TYPE_INT, stats.pktSentACK,
         /* number of NAK packets sent by receiver */
-        "packet-nack-received", G_TYPE_INT, stats.pktSentNAK,
+        "packet-nack-sent", G_TYPE_INT, stats.pktSentNAK,
         /* number of too-late-to play missing packets */
         "packets-received-dropped", G_TYPE_INT, stats.pktRcvDrop,
         /* number of received AND IGNORED packets due to having come too late */
